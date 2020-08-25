@@ -79,7 +79,7 @@ class ProxyManager
                     'protocol' => $protocol
                 ]);
                 ksort($item);
-                $tRet = $proxyClient->__call(__FUNCTION__, $item);
+                $tRet = $proxyClient->__call(__FUNCTION__, ['data' => $item]);
                 $keys = array_keys($item);
                 foreach ($tRet as $v) {
                     $ret[array_shift($keys)] = $v;

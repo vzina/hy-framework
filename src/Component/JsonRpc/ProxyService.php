@@ -36,12 +36,12 @@ class ProxyService
         $this->container = $container;
     }
 
-    public function wait(...$argv)
+    public function wait(array $data)
     {
         $factory = make(DispatcherFactory::class, ['pathGenerator' => make(PathGenerator::class)]);
         $dispatcher = $factory->getDispatcher(static::PROXY_SERVER_NAME);
         $ret = [];
-        foreach ($argv as $key => [$func, $params]) {
+        foreach ($data as $key => [$func, $params]) {
             $routes = $dispatcher->dispatch('POST', $func);
             $dispatched = new Dispatched($routes);
 
