@@ -1,0 +1,42 @@
+{
+    "name": "vzina/framework",
+    "description": "php hyperf",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "vzina",
+            "email": "yeweijian299@163.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+    	"psr-4": {
+	     "EyPhp\\Framework\\": "src"
+	}
+    },
+    "require": {
+        "php": ">=7.2",
+        "ext-swoole": ">=4.5",
+        "hyperf/config": "~2.0.0",
+        "hyperf/di": "~2.0.0",
+        "hyperf/framework": "~2.0.0",
+        "hyperf/guzzle": "~2.0.0",
+        "hyperf/json-rpc": "~2.0.0",
+        "hyperf/rpc": "~2.0.0",
+        "hyperf/rpc-client": "~2.0.0",
+        "hyperf/rpc-server": "~2.0.0"
+    },
+    "require-dev": {
+        "swoft/swoole-ide-helper": "^4.2",
+        "hyperf/logger": "~2.0.0",
+        "hyperf/consul": "~2.0.0",
+        "phpunit/phpunit": "^9.0",
+        "friendsofphp/php-cs-fixer": "^2.16"
+    },
+    "extra": {
+        "hyperf": {
+            "config": "EyPhp\\Framework\\ConfigProvider"
+        }
+    }
+}
