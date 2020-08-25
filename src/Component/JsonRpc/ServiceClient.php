@@ -110,10 +110,12 @@ class ServiceClient extends BaseServiceClient
         return $this->serviceName;
     }
 
-    public function setServiceName(string $serviceName): self
+    /**
+     * @return string
+     */
+    public function getProtocol(): string
     {
-        $this->serviceName = $serviceName;
-        return $this;
+        return $this->protocol;
     }
 
     public function getPathGenerator()

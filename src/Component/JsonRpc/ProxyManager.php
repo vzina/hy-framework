@@ -63,18 +63,20 @@ class ProxyManager
     public function wait()
     {
         if ($this->locker) {
-            throw new \Exception("Error Processing Request");
+            throw new \Exception("Error Processing");
         }
         $this->locker = true;
         try {
             $result = $this->formatMaps();
             $ret = [];
-            foreach ($result as $groupName => $item) {
+            foreach ($result as $index => $item) {
+                list($groupName, $protocol) = explode('__', $index);
                 /** @var ServiceClient $proxyClient */
                 $proxyClient = make(ServiceClient::class, [
                     'container' => $this->container,
                     'groupName' => $groupName,
-                    'serviceName' => $this->serviceName
+                    'serviceName' => $this->serviceName,
+                    'protocol' => $protocol
                 ]);
                 ksort($item);
                 $tRet = $proxyClient->__call(__FUNCTION__, $item);
@@ -89,7 +91,6 @@ class ProxyManager
             $this->locker = false;
             $this->maps = [];
         }
-
     }
 
     protected function formatMaps()
@@ -105,14 +106,16 @@ class ProxyManager
             /** @var ServiceClient $serviceClient */
             $serviceClient = $service->getClient();
             $groupName = $serviceClient->getGroupName();
-            if (!array_key_exists($groupName, $result)) {
-                $result[$groupName] = [];
+            $protocol = $serviceClient->getProtocol();
+            $index = "{$groupName}__{$protocol}";
+            if (!array_key_exists($index, $result)) {
+                $result[$index] = [];
             }
 
             $method = $serviceClient->getPathGenerator()
                 ->generate($serviceClient->getServiceName(), $func);
 
-            $result[$groupName][$key] = [$method, $args];
+            $result[$index][$key] = [$method, $args];
         }
         return $result;
     }
