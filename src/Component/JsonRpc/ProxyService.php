@@ -41,7 +41,6 @@ class ProxyService
         $factory = make(DispatcherFactory::class, ['pathGenerator' => make(PathGenerator::class)]);
         $dispatcher = $factory->getDispatcher(static::PROXY_SERVER_NAME);
         $ret = [];
-        var_dump($argv);
         foreach ($argv as $key => [$func, $params]) {
             $routes = $dispatcher->dispatch('POST', $func);
             $dispatched = new Dispatched($routes);
@@ -50,8 +49,6 @@ class ProxyService
             if (! $dispatched->isFound()) {
                 throw new \Exception("Method Not Found:{$func}");
             }
-
-            var_dump($dispatched->handler->callback);
 
             // 执行请求
             [$ct, $ac] = $dispatched->handler->callback;
@@ -67,10 +64,10 @@ class ProxyService
      */
     public static function registerRoute()
     {
-        if (env('ENABLE_JSON_RPC_PROXY', false)) {
+        if (env('JSON_RPC_PROXY_ENABLE', false)) {
             // json rpc代理路由
             Router::addServer(static::PROXY_SERVER_NAME, function () {
-                Router::add('/rpc_proxy/wait', __CLASS__ . '@wait');
+                Router::add('/proxy/wait', __CLASS__ . '@wait');
             });
         }
     }

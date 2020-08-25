@@ -47,6 +47,12 @@ class ConfigProvider
                 [
                     'id' => 'config',
                     'description' => 'The config for rpc router.',
+                    'source' => __DIR__ . '/../publish/autoload/services.php',
+                    'destination' => BASE_PATH . '/config/autoload/services.php',
+                ],
+                [
+                    'id' => 'config',
+                    'description' => 'The config for rpc router.',
                     'source' => __DIR__ . '/../publish/services.php',
                     'destination' => BASE_PATH . '/config/services.php',
                 ],

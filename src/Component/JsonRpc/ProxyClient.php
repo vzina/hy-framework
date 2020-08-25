@@ -18,27 +18,31 @@ namespace EyPhp\Framework\Component\JsonRpc;
 class ProxyClient
 {
     /**
-     * @var ServiceClient
+     * @var string
      * @author weijian.ye <yeweijian299@163.com>
      */
-    protected $client;
-    protected $data = [];
-    protected $serviceName = 'RpcProxyService';
+    protected $proxyServiceName = '';
 
-    public function __construct(ServiceClient $client)
+    /**
+     * @var ProxyManager
+     * @author weijian.ye <yeweijian299@163.com>
+     */
+    protected $proxyManager;
+
+    public function __construct(ProxyManager $proxyManager)
     {
-        $this->client = $client;
+        $this->proxyManager = $proxyManager;
+    }
+
+    public function setProxyService(string $proxyServiceName)
+    {
+        $this->proxyServiceName = $proxyServiceName;
+        return $this;
     }
 
     public function __call($method, $argv)
     {
-        $service = $this->client->getServiceName();
-        $func = $this->client->getPathGenerator()->generate($service, $method);
-        $this->data[] = [$func, $argv];
-    }
-
-    public function wait()
-    {
-        return $this->client->setServiceName($this->serviceName)->__call(__FUNCTION__, $this->data);
+        $this->proxyManager->setProxyData($this->proxyServiceName, $method, $argv);
+        return $this;
     }
 }

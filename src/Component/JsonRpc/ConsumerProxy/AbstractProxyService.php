@@ -33,7 +33,6 @@ class AbstractProxyService extends BaseAbstractProxyService
         ]);
     }
 
-
     public function getClient()
     {
         return $this->client;
