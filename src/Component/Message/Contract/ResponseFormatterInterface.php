@@ -18,4 +18,5 @@ namespace EyPhp\Framework\Component\Message\Contract;
 interface ResponseFormatterInterface
 {
     public function format($data): string;
+    public function statusCode(): int;
 }

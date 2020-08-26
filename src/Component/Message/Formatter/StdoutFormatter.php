@@ -12,6 +12,7 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\Message\Formatter;
 
+use EyPhp\Framework\Component\Message\StatusCode;
 use EyPhp\Framework\Component\Message\Contract\ResponseFormatterInterface;
 
 /**
@@ -19,6 +20,11 @@ use EyPhp\Framework\Component\Message\Contract\ResponseFormatterInterface;
  */
 class StdoutFormatter implements ResponseFormatterInterface
 {
+
+    public function statusCode(): int
+    {
+        return StatusCode::OK;
+    }
 
     public function format($data): string
     {

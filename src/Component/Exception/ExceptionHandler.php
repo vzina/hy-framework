@@ -19,7 +19,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use EyPhp\Framework\Component\Exception\Event\ExceptionEvent;
 use EyPhp\Framework\Component\Message\Formatter\ExceptionFormatter;
-use EyPhp\Framework\Component\Message\ResponseFormatterFactory;
+use EyPhp\Framework\Component\Message\ResponseFactory;
 use Hyperf\ExceptionHandler\ExceptionHandler as HyperfExceptionHandler;
 
 /**
@@ -41,9 +41,9 @@ class ExceptionHandler extends HyperfExceptionHandler
     public function handle(Throwable $throwable, ResponseInterface $response)
     {
         $this->container->get(EventDispatcherInterface::class)->dispatch(new ExceptionEvent($throwable));
-        return ResponseFormatterFactory::format(
-            $response,
+        return ResponseFactory::format(
             $this->toException($throwable),
+            $response,
             ExceptionFormatter::class
         );
     }

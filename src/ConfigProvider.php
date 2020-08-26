@@ -6,6 +6,7 @@ namespace EyPhp\Framework;
 use EyPhp\Framework\Component\Exception\ExceptionHandler;
 use EyPhp\Framework\Component\JsonRpc\Listeners\AutoAddConsumerDefinitionListener;
 use EyPhp\Framework\Component\Logger\StdoutLoggerFactory;
+use EyPhp\Framework\Middleware\ResponseFormatterMiddleware;
 use Hyperf\Contract\StdoutLoggerInterface;
 
 class ConfigProvider
@@ -32,9 +33,15 @@ class ConfigProvider
                 return $result;
             })),
             'middlewares' => [
-                'http' => [],
-                'jsonrpc-http' => [],
-                'jsonrpc-tcp-length-check' => [],
+                'http' => [
+                    ResponseFormatterMiddleware::class
+                ],
+                'jsonrpc-http' => [
+                    ResponseFormatterMiddleware::class
+                ],
+                'jsonrpc-tcp-length-check' => [
+                    ResponseFormatterMiddleware::class
+                ],
             ],
             'exceptions' => [
                 'handler' => [
