@@ -13,10 +13,11 @@ declare (strict_types=1);
 namespace EyPhp\Framework\Component\Message;
 
 use Hyperf\Constants\AbstractConstants;
+use Hyperf\Constants\Annotation\Constants;
 
 /**
  * description
- *
+ * @Constants()
  * @method static getMessage(int $code): string
  */
 class StatusCode extends AbstractConstants

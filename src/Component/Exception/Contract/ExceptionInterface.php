@@ -17,21 +17,4 @@ namespace EyPhp\Framework\Component\Exception\Contract;
  */
 interface ExceptionInterface
 {
-    /**
-     * toArray
-     * @return array
-     */
-    public function toArray(): array;
-
-    /**
-     * toJson
-     * @return string
-     */
-    public function toJson(): string;
-
-    /**
-     * toXml
-     * @return string
-     */
-    public function toXml(): string;
 }

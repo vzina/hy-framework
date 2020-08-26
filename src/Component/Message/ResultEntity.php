@@ -22,7 +22,7 @@ class ResultEntity implements Arrayable, JsonSerializable
 {
     protected $code;
     protected $message;
-    protected $data;
+    protected $data = [];
 
     public function getCode(): int
     {
@@ -55,6 +55,11 @@ class ResultEntity implements Arrayable, JsonSerializable
     {
         $this->data = $data;
         return $this;
+    }
+
+    public function __toString()
+    {
+        return json_encode($this);
     }
 
     public function jsonSerialize()

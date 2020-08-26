@@ -1,6 +1,6 @@
 <?php
 /**
- * StdoutLoggerFactory.php
+ * StdoutLogger.php
  * PHP version 7
  *
  * @package framework
@@ -18,10 +18,10 @@ use Psr\Container\ContainerInterface;
 /**
  * description
  */
-class StdoutLoggerFactory
+class StdoutLogger
 {
     public function __invoke(ContainerInterface $container)
     {
-        return $container->get(LoggerFactory::class)->get('default');
+        return SysLog::get();
     }
 }

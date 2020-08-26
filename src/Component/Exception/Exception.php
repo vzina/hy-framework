@@ -14,32 +14,12 @@ namespace EyPhp\Framework\Component\Exception;
 
 use Exception as GlobalException;
 use EyPhp\Framework\Component\Exception\Contract\ExceptionInterface;
-use Hyperf\Utils\Codec\Json;
+use EyPhp\Framework\Component\Message\StatusCode;
 
 /**
  * description
  */
 class Exception extends GlobalException implements ExceptionInterface
 {
-
-    public function toArray(): array
-    {
-        return [
-            'message' => $this->message,
-            'code' => $this->code,
-            'file' => $this->file,
-            'line' => $this->line
-        ];
-    }
-
-    public function toJson(): string
-    {
-        return Json::encode($this->toArray());
-    }
-
-    public function toXml(): string
-    {
-        // TODO: 未实现
-        return '';
-    }
+    protected $code = StatusCode::BAD_REQUEST;
 }

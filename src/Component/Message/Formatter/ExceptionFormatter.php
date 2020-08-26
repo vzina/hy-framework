@@ -12,7 +12,11 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\Message\Formatter;
 
-use EyPhp\Framework\Component\Exception\Contract\ExceptionInterface;
+use EyPhp\Framework\Component\Exception\Exception;
+use EyPhp\Framework\Component\Logger\SysLog;
+use EyPhp\Framework\Component\Message\ResultEntity;
+use EyPhp\Framework\Component\Message\StatusCode;
+use Psr\Container\ContainerInterface;
 
 /**
  * description
@@ -21,11 +25,20 @@ class ExceptionFormatter extends StdoutFormatter
 {
     /**
      * format
-     * @param  ExceptionInterface $data
+     * @param  Exception $exception
      * @return string
      */
-    public function format($data): string
+    public function format($exception): string
     {
-        return (string)$data;
+        $logger = SysLog::get();
+        $resultEntity = make(ResultEntity::class);
+        if ($exception->getPrevious()) {
+            $exception = $exception->getPrevious();
+            $resultEntity->setCode(StatusCode::INTERNAL_SERVER_ERROR);
+        } else {
+            $resultEntity->setCode($exception->getCode())
+                ->setMessage($exception->getMessage());
+        }
+        return (string)$resultEntity;
     }
 }
