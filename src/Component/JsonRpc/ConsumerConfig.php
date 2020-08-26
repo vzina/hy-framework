@@ -22,16 +22,15 @@ use Symfony\Component\Finder\SplFileInfo;
  */
 class ConsumerConfig
 {
+    const SERVER_PROTOCOL = 'jsonrpc-http';
+    const SERVER_LOAD_BALANCER = 'random';
+    const CONTRACT_DIR_NAME = 'Contract';
+
     /**
-     * Undocumented variable
-     *
      * @var Filesystem
      * @author weijian.ye <yeweijian299@163.com>
      */
     protected $filesystem;
-
-    protected $protocol = 'jsonrpc-http';
-    protected $loadBalancer = 'random';
 
     public function __construct()
     {
@@ -45,12 +44,12 @@ class ConsumerConfig
 
     protected function build()
     {
-        $services = $this->loadCfg();
         $ret = [];
+        $services = $this->loadCfg();
         foreach ($services as $service) {
-            if (env('REGISTRY_ENABLE', false)) {
+            if (env('REGISTRY_CENTER_ENABLE', false)) {
                 $consumers = $this->getConsulConsumer($service);
-            }{
+            } else {
                 $consumers = $this->getNodeConsumer($service);
             }
             // 过滤空配置
@@ -63,27 +62,26 @@ class ConsumerConfig
 
     protected function getConsulConsumer(array $service)
     {
-        $name = (string) $service['name'];
-        $envSet = (string)env('CONSUL_URI');
+        $envSet = (string) env('CONSUL_URI');
         if (empty($envSet)) {
-            return [];
+            throw new Exception("未设置环境变量[CONSUL_URI]");
         }
         return [
-            'name' => $name,
-            'protocol' => $this->protocol,
-            'load_balancer' => $this->loadBalancer,
+            'name' => (string) $service['name'],
+            'protocol' => (string) $service['protocol'],
+            'load_balancer' => (string) $service['load_balancer'],
             'registry' => [
                 'protocol' => 'consul',
                 'address' => $envSet,
             ],
-            'pool' => $this->getPoolConfig($this->getPrefixByName($name)),
+            'pool' => $this->getPoolConfig((string) $service['prefix']),
         ];
     }
 
     protected function getNodeConsumer(array $service): array
     {
         $nodes = [];
-        $prefix = $this->getPrefixByName((string) $service['name']);
+        $prefix = (string) $service['prefix'];
         $envName = $prefix . '_NODES';
         $envSet = (string) env($envName);
         // 不处理空配置
@@ -94,14 +92,12 @@ class ConsumerConfig
         foreach ($nodeList as $node) {
             $nodeArr = explode(':', $node, 2);
             if (sizeof($nodeArr) != 2) {
-                throw new Exception('[ServiceConsumerConfig.get]Error Node Conf ' . $envName);
+                throw new Exception(sprintf('环境配置[%s]格式异常', $envName));
             }
             $nodes[] = ['host' => $nodeArr[0], 'port' => (int) $nodeArr[1]];
         }
 
         $result = [
-            'protocol' => $this->protocol,
-            'load_balancer' => $this->loadBalancer,
             'nodes' => $nodes,
             'pool' => $this->getPoolConfig($prefix),
         ];
@@ -119,11 +115,6 @@ class ConsumerConfig
         ];
     }
 
-    protected function getPrefixByName(string $name): string
-    {
-        return strtoupper(preg_replace('/([a-z])([A-Z])/', "$1_$2", $name));
-    }
-
     protected function loadCfg(): array
     {
         $services = Composer::getMergedExtra('eyphp')['config'] ?? [];
@@ -136,25 +127,33 @@ class ConsumerConfig
         foreach ($services as $service) {
             if (is_string($service) && class_exists($service) && method_exists($service, '__invoke')) {
                 $basePath = (new $service())();
-                $servicePath = $basePath . '/Contract';
+                $contractDirName = defined("{$service}::CONTRACT_DIR_NAME") ? constant("{$service}::CONTRACT_DIR_NAME") : static::CONTRACT_DIR_NAME;
+                $servicePath = $basePath . '/' . $contractDirName;
                 if (!is_dir($servicePath)) {
                     continue;
                 }
                 $paths = $this->filesystem->directories($servicePath);
+                $nsRoot = substr($service, 0, strrpos($service, '\\'));
+                $protocol = defined("{$service}::SERVER_PROTOCOL") ? constant("{$service}::SERVER_PROTOCOL") : static::SERVER_PROTOCOL;
+                $loadBalancer = defined("{$service}::SERVER_LOAD_BALANCER") ? constant("{$service}::SERVER_LOAD_BALANCER") : static::SERVER_LOAD_BALANCER;
                 foreach ($paths as $path) {
-                    $info = [
-                        'name' => basename($path),
+                    $name = basename($path);
+                    $groupCfg = [
+                        // 配置前缀，如：EYPHP_SERVICE_USER  EYPHP_SERVICE：服务的根命名空间，USER：服务分组名
+                        'prefix' => strtoupper(strtr($nsRoot, '\\', '_') . '_' . preg_replace('/([a-z])([A-Z])/', "$1_$2", $name)),
+                        'name' => $name,
+                        'protocol' => $protocol,
+                        'load_balancer' => $loadBalancer,
                         'auto_services' => [],
                     ];
 
                     $files = $this->filesystem->files($path);
                     foreach ($files as $file) {
                         /** @var SplFileInfo $file */
-                        $info['auto_services'][] = substr($service, 0, strrpos($service, '\\')) . strtr(
-                            strstr($file->getPathname(), '.', true), [$basePath => '', '/' => '\\']
-                        );
+                        $groupCfg['auto_services'][] = $nsRoot . strtr(strstr($file->getPathname(), '.', true), [$basePath => '', '/' => '\\']);
+
                     }
-                    $serviceConfigs[] = $info;
+                    $serviceConfigs[] = $groupCfg;
                 }
             }
         }

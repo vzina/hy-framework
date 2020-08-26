@@ -14,7 +14,6 @@ namespace EyPhp\Framework\Component\JsonRpc\ConsumerProxy;
 
 use Psr\Container\ContainerInterface;
 use EyPhp\Framework\Component\JsonRpc\ServiceClient;
-use EyPhp\Framework\Component\JsonRpc\ProxyClient;
 use Hyperf\RpcClient\Proxy\AbstractProxyService as BaseAbstractProxyService;
 
 /**
@@ -33,7 +32,12 @@ class AbstractProxyService extends BaseAbstractProxyService
         ]);
     }
 
-    public function getClient()
+    /**
+     * getRpcClient
+     * @return ServiceClient
+     * @author weijian.ye <yeweijian299@163.com>
+     */
+    final public function getRpcClient(): ServiceClient
     {
         return $this->client;
     }

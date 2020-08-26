@@ -25,7 +25,8 @@
         "hyperf/json-rpc": "~2.0.0",
         "hyperf/rpc": "~2.0.0",
         "hyperf/rpc-client": "~2.0.0",
-        "hyperf/rpc-server": "~2.0.0"
+        "hyperf/rpc-server": "~2.0.0",
+        "hyperf/pool": "~2.0.0"
     },
     "require-dev": {
         "swoft/swoole-ide-helper": "^4.2",

@@ -70,7 +70,7 @@ class ProxyManager
             $result = $this->formatMaps();
             $ret = [];
             foreach ($result as $index => $item) {
-                list($groupName, $protocol) = explode('__', $index);
+                [, $groupName, $protocol] = explode('__', $index);
                 /** @var ServiceClient $proxyClient */
                 $proxyClient = make(ServiceClient::class, [
                     'container' => $this->container,
@@ -104,17 +104,17 @@ class ProxyManager
             /** @var AbstractProxyService $service */
             $service = $this->container->get($serviceName);
             /** @var ServiceClient $serviceClient */
-            $serviceClient = $service->getClient();
+            $serviceClient = $service->getRpcClient();
             $groupName = $serviceClient->getGroupName();
             $protocol = $serviceClient->getProtocol();
-            $index = "{$groupName}__{$protocol}";
+            // 解决分组名相同问题
+            [$prefix] = explode('\\', trim($serviceName, '\\'), 2);
+            $index = "{$prefix}__{$groupName}__{$protocol}";
             if (!array_key_exists($index, $result)) {
                 $result[$index] = [];
             }
 
-            $method = $serviceClient->getPathGenerator()
-                ->generate($serviceClient->getServiceName(), $func);
-
+            $method = $serviceClient->getPathGenerator()->generate($serviceClient->getServiceName(), $func);
             $result[$index][$key] = [$method, $args];
         }
         return $result;

@@ -8,15 +8,15 @@
  * @contact yeweijian299@163.com
  * @link    https://github.com/vzina
  */
-declare (strict_types=1);
+declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\JsonRpc;
 
+use Hyperf\HttpServer\Router\Dispatched;
 use Hyperf\JsonRpc\PathGenerator;
+use Hyperf\RpcServer\Router\DispatcherFactory;
 use Hyperf\RpcServer\Router\Router;
 use Psr\Container\ContainerInterface;
-use Hyperf\HttpServer\Router\Dispatched;
-use Hyperf\RpcServer\Router\DispatcherFactory;
 
 /**
  * description
@@ -46,13 +46,13 @@ class ProxyService
             $dispatched = new Dispatched($routes);
 
             // 检查路由是否正确
-            if (! $dispatched->isFound()) {
-                throw new \Exception("Method Not Found:{$func}");
+            if (!$dispatched->isFound()) {
+                throw new \Exception("Method Not Found: {$func}");
             }
 
             // 执行请求
             [$ct, $ac] = $dispatched->handler->callback;
-            $ret[$key] = $this->container->get($ct)->{$ac}(...$params);
+            $ret[$key] = call([$this->container->get($ct), $ac], $params);
         }
         return $ret;
     }
@@ -67,7 +67,7 @@ class ProxyService
         if (env('JSON_RPC_PROXY_ENABLE', false)) {
             // json rpc代理路由
             Router::addServer(static::PROXY_SERVER_NAME, function () {
-                Router::add('/proxy/wait', __CLASS__ . '@wait');
+                Router::add('/' . strtolower(substr((string) strrchr(__CLASS__, '\\'), 1, -7)) . '/wait', __CLASS__ . '@wait');
             });
         }
     }

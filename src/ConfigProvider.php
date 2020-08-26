@@ -3,19 +3,34 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework;
 
+use EyPhp\Framework\Component\Exception\ExceptionHandler;
 use EyPhp\Framework\Component\JsonRpc\Listeners\AutoAddConsumerDefinitionListener;
+use EyPhp\Framework\Component\Logger\StdoutLoggerFactory;
+use Hyperf\Contract\StdoutLoggerInterface;
 
 class ConfigProvider
 {
     public function __invoke(): array
     {
         return [
-            'dependencies' => [],
-            'listeners' => [
-                value(function() {
-                    return env('CONSUMERS_AUTO_SERVICES_ENABLE', false) ? AutoAddConsumerDefinitionListener::class : null;
-                })
-            ],
+            'dependencies' => array_merge([
+                // code ...
+            ], value(function () {
+                $result = [];
+                if ((bool) env('LOGGER_STDOUT_FILE', false)) {
+                    $result[StdoutLoggerInterface::class] = StdoutLoggerFactory::class;
+                }
+                return $result;
+            })),
+            'listeners' => array_merge([
+                // code ...
+            ], value(function () {
+                $result = [];
+                if ((bool) env('CONSUMERS_AUTO_SERVICES_ENABLE', false)) {
+                    $result[] = AutoAddConsumerDefinitionListener::class;
+                }
+                return $result;
+            })),
             'middlewares' => [
                 'http' => [],
                 'jsonrpc-http' => [],
@@ -23,9 +38,15 @@ class ConfigProvider
             ],
             'exceptions' => [
                 'handler' => [
-                    'http' => [],
-                    'jsonrpc-http' => [],
-                    'jsonrpc-tcp-length-check' => [],
+                    'http' => [
+                        ExceptionHandler::class
+                    ],
+                    'jsonrpc-http' => [
+                        ExceptionHandler::class
+                    ],
+                    'jsonrpc-tcp-length-check' => [
+                        ExceptionHandler::class
+                    ],
                 ],
                 'code' => [],
             ],
