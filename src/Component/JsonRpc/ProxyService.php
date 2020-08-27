@@ -36,7 +36,7 @@ class ProxyService
         $this->container = $container;
     }
 
-    public function wait(array $data)
+    public function wait(array $data): array
     {
         $factory = make(DispatcherFactory::class, ['pathGenerator' => make(PathGenerator::class)]);
         $dispatcher = $factory->getDispatcher(static::PROXY_SERVER_NAME);

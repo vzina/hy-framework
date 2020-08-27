@@ -26,12 +26,12 @@ class ProxyCallVisitor extends NodeVisitorAbstract
     /**
      * @var string
      */
-    private $classname;
+    protected $classname;
 
     /**
      * @var string
      */
-    private $namespace;
+    protected $namespace;
 
     public function __construct(string $classname)
     {

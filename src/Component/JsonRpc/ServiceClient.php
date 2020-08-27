@@ -118,6 +118,11 @@ class ServiceClient extends BaseServiceClient
         return $this->protocol;
     }
 
+    public function getOpts(): array
+    {
+        return $this->getOptions();
+    }
+
     public function getPathGenerator()
     {
         return $this->pathGenerator;
