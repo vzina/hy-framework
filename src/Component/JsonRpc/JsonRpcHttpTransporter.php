@@ -12,13 +12,11 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\JsonRpc;
 
-use EyPhp\Framework\Component\Guzzle\CoroutineHandler;
+use EyPhp\Framework\Component\Guzzle\ClientFactory;
 use GuzzleHttp\Client;
-use GuzzleHttp\HandlerStack;
 use Hyperf\LoadBalancer\LoadBalancerInterface;
 use Hyperf\LoadBalancer\Node;
 use Hyperf\Rpc\Contract\TransporterInterface;
-use Hyperf\Utils\Coroutine;
 
 /**
  * description
@@ -62,7 +60,13 @@ class JsonRpcHttpTransporter implements TransporterInterface
         'remove_disable_node' => false,
     ];
 
-    public function __construct(array $config = [])
+    /**
+     * @var ClientFactory
+     * @author weijian.ye <yeweijian299@163.com>
+     */
+    protected $clientFactory;
+
+    public function __construct(ClientFactory $clientFactory, array $config = [])
     {
         if (!isset($config['recv_timeout'])) {
             $config['recv_timeout'] = $this->recvTimeout;
@@ -74,6 +78,7 @@ class JsonRpcHttpTransporter implements TransporterInterface
             $this->retryTimes = (int)$config['retry_times'];
             unset($config['retry_times']);
         }
+        $this->clientFactory = $clientFactory;
         $this->clientOptions = array_merge($this->clientOptions, $config);
     }
 
@@ -127,14 +132,7 @@ class JsonRpcHttpTransporter implements TransporterInterface
         $options['timeout'] = $options['recv_timeout'] + $options['connect_timeout'];
         unset($options['recv_timeout'], $options['connect_timeout']);
 
-        $stack = null;
-        if (Coroutine::getCid() > 0) {
-            $stack = HandlerStack::create(new CoroutineHandler());
-        }
-
-        $config = array_replace(['handler' => $stack], $options);
-
-        return make(Client::class, ['config' => $config]);
+        return $this->clientFactory->create($options);
     }
 
     public function getLoadBalancer(): ?LoadBalancerInterface
@@ -181,6 +179,8 @@ class JsonRpcHttpTransporter implements TransporterInterface
         if ($this->loadBalancer instanceof LoadBalancerInterface) {
             return $this->loadBalancer->select();
         }
+        // @see https://wiki.swoole.com/#/getting_started/notice?id=mt_rand%e9%9a%8f%e6%9c%ba%e6%95%b0
+        mt_srand();
         return $this->nodes[array_rand($this->nodes)];
     }
 }

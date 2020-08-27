@@ -47,9 +47,6 @@ class ResponseFactory
         $contentType = $request->getHeaderLine('content-type');
         $type = StdoutFormatter::class;
         switch (true) {
-            case stripos($contentType, 'json') !== false:
-                $type = JsonFormatter::class;
-                break;
             case stripos($contentType, 'xml') !== false:
                 $type = XmlFormatter::class;
                 break;

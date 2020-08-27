@@ -13,12 +13,13 @@ declare (strict_types = 1);
 namespace EyPhp\Framework\Component\Message;
 
 use Hyperf\Utils\Contracts\Arrayable;
+use Hyperf\Utils\Contracts\Jsonable;
 use JsonSerializable;
 
 /**
  * description
  */
-class ResultEntity implements Arrayable, JsonSerializable
+class ResultEntity implements Arrayable, JsonSerializable, Jsonable
 {
     protected $code;
     protected $message;
@@ -59,7 +60,7 @@ class ResultEntity implements Arrayable, JsonSerializable
 
     public function __toString()
     {
-        return json_encode($this);
+        return json_encode($this, JSON_UNESCAPED_UNICODE);
     }
 
     public function jsonSerialize()

@@ -15,6 +15,7 @@ namespace EyPhp\Framework;
 use EyPhp\Framework\Component\Message\ResultEntity;
 use EyPhp\Framework\Component\Message\StatusCode;
 use Psr\Container\ContainerInterface;
+use Hyperf\Di\Annotation\Inject;
 
 /**
  * description
@@ -22,26 +23,35 @@ use Psr\Container\ContainerInterface;
 abstract class AbstractController
 {
     /**
-     * @var ResultEntity
-     * @author weijian.ye <yeweijian299@163.com>
-     */
-    private $resultEntity;
-
-    /**
+     * @Inject
      * @var ContainerInterface
-     * @author weijian.ye <yeweijian299@163.com>
      */
     protected $container;
 
-    public function __construct(ContainerInterface $container)
-    {
-        $this->container = $container;
-        $this->resultEntity = make(ResultEntity::class);
-    }
+    /**
+     * @Inject
+     * @var RequestInterface
+     */
+    protected $request;
 
-    protected function result($data = [], $code = StatusCode::OK, $message = '')
+    /**
+     * @Inject
+     * @var ResponseInterface
+     */
+    protected $response;
+
+    /**
+     * api 统一响应内容
+     *
+     * @param array $data
+     * @param int $code
+     * @param string $message
+     * @return ResultEntity
+     * @author weijian.ye <yeweijian299@163.com>
+     */
+    protected function result($data = [], $code = StatusCode::OK, $message = ''): ResultEntity
     {
-        return $this->resultEntity->setCode($code)
+        return make(ResultEntity::class)->setCode($code)
             ->setMessage($message)
             ->setData($data);
     }

@@ -74,7 +74,7 @@ class ConsumerConfig
                 'protocol' => 'consul',
                 'address' => $envSet,
             ],
-            'pool' => $this->getPoolConfig((string) $service['prefix']),
+            'options' => $this->getOptionsConfig((string) $service['prefix']),
         ];
     }
 
@@ -99,19 +99,26 @@ class ConsumerConfig
 
         $result = [
             'nodes' => $nodes,
-            'pool' => $this->getPoolConfig($prefix),
+            'options' => $this->getOptionsConfig($prefix),
         ];
 
         return array_merge($service, $result);
     }
 
-    protected function getPoolConfig(string $prefix)
+    protected function getOptionsConfig(string $prefix)
     {
         return [
-            'min_connections' => (int) env($prefix . '_MIN_CONNECTIONS', 1),
-            'max_connections' => (int) env($prefix . '_MAX_CONNECTIONS', 32),
-            'wait_timeout' => (int) env($prefix . '_WAIT_TIMEOUT', 3.0),
-            'max_idle_time' => (int) env($prefix . '_MAX_IDLE_TIME', 60),
+            'timeout' => 5,
+            'remove_disable_node' => false,
+            'swoole' => [
+                'keep_alive' => true,
+            ],
+            'pool' => [
+                'min_connections' => (int) env($prefix . '_MIN_CONNECTIONS', 1),
+                'max_connections' => (int) env($prefix . '_MAX_CONNECTIONS', 32),
+                'wait_timeout' => (int) env($prefix . '_WAIT_TIMEOUT', 3.0),
+                'max_idle_time' => (int) env($prefix . '_MAX_IDLE_TIME', 60),
+            ],
         ];
     }
 
