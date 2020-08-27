@@ -12,7 +12,6 @@ declare (strict_types=1);
 
 namespace EyPhp\Framework\Component\Logger;
 
-use Hyperf\Logger\LoggerFactory;
 use Psr\Container\ContainerInterface;
 
 /**

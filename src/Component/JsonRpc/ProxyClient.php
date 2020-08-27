@@ -43,6 +43,5 @@ class ProxyClient
     public function __call($method, $argv)
     {
         $this->proxyManager->setProxyData($this->proxyServiceName, $method, $argv);
-        return $this;
     }
 }
