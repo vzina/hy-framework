@@ -46,7 +46,7 @@ class ConsulService implements ServiceGovernanceInterface
 
     public function __construct(ContainerInterface $container, array $options = [])
     {
-        $this->logger = SysLog::get(SysLog::default);
+        $this->logger = SysLog::get(SysLog::DEFAULT);
         $this->options = $options;
         $this->consulAgent = new Agent(function () use ($container) {
             $config = $container->get(ConfigInterface::class);
