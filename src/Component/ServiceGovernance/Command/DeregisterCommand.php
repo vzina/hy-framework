@@ -32,6 +32,5 @@ class DeregisterCommand extends HyperfCommand
     public function handle()
     {
         ApplicationContext::getContainer()->get(ServiceManager::class)->deregister();
-        var_dump(11111);
     }
 }
