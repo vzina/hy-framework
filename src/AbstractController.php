@@ -12,10 +12,12 @@ declare (strict_types=1);
 
 namespace EyPhp\Framework;
 
-use EyPhp\Framework\Component\Message\ResultEntity;
-use EyPhp\Framework\Component\Message\StatusCode;
-use Psr\Container\ContainerInterface;
 use Hyperf\Di\Annotation\Inject;
+use Psr\Container\ContainerInterface;
+use Hyperf\HttpServer\Contract\RequestInterface;
+use Hyperf\HttpServer\Contract\ResponseInterface;
+use EyPhp\Framework\Component\Message\StatusCode;
+use EyPhp\Framework\Component\Message\ResultEntity;
 
 /**
  * description

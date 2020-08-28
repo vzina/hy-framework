@@ -10,12 +10,14 @@
  */
 declare (strict_types=1);
 
-namespace EyPhp\Framework\Component\ServiceGovernance\Adapter;
+namespace EyPhp\Framework\Component\ServiceGovernance\Service;
 
-use EyPhp\Framework\Component\Logger\SysLog;
-use EyPhp\Framework\Component\ServiceGovernance\Contract\ServiceGovernanceInterface;
 use Hyperf\Consul\Agent;
+use Hyperf\Contract\ConfigInterface;
 use Psr\Container\ContainerInterface;
+use EyPhp\Framework\Component\Logger\SysLog;
+use EyPhp\Framework\Component\Guzzle\ClientFactory;
+use EyPhp\Framework\Component\ServiceGovernance\Contract\ServiceGovernanceInterface;
 
 /**
  * description
@@ -24,45 +26,42 @@ class ConsulService implements ServiceGovernanceInterface
 {
     /**
      * @var Agent
-     * @author Weijian.Ye <yeweijian@3k.com>
      */
     protected $consulAgent;
 
     /**
      * @var array
-     * @author Weijian.Ye <yeweijian@3k.com> 
      */
     protected $registeredServices = [];
 
     /**
      * @var \Hyperf\Logger\Logger
-     * @author Weijian.Ye <yeweijian@3k.com>
      */
     protected $logger;
+
     /**
      * @var array
      */
-    protected $defaultLoggerContext = [
-        'component' => 'service-governance',
-    ];
+    protected $options;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerInterface $container, array $options = [])
     {
         $this->logger = SysLog::get(SysLog::DEFAULT);
+        $this->options = $options;
         $this->consulAgent = new Agent(function () use ($container) {
             $config = $container->get(ConfigInterface::class);
             return $container->get(ClientFactory::class)->create([
-                'timeout' => 2,
-                'base_uri' => $config->get('consul.uri', Agent::DEFAULT_URI),
+                'timeout' => $this->options['timeout'] ?? 2,
+                'base_uri' => $this->options['register'] ?? $config->get('consul.uri', Agent::DEFAULT_URI),
             ]);
         });
     }
 
-    public function register(string $serviceName, string $address, int $port, string $protocol)
+    public function register(string $serviceName, string $host, int $port, string $protocol)
     {
-        $this->logger->debug(sprintf('Service %s is registering to the consul.', $serviceName), $this->defaultLoggerContext);
-        if ($this->isRegistered($serviceName, $address, $port, $protocol)) {
-            $this->logger->info(sprintf('Service %s has been already registered to the consul.', $serviceName), $this->defaultLoggerContext);
+        $this->logger->debug(sprintf('Service %s is registering to the consul.', $serviceName));
+        if ($this->isRegistered($serviceName, $host, $port, $protocol)) {
+            $this->logger->info(sprintf('Service %s has been already registered to the consul.', $serviceName));
             return;
         }
 
@@ -70,7 +69,7 @@ class ConsulService implements ServiceGovernanceInterface
         $requestBody = [
             'Name' => $serviceName,
             'ID' => $nextId,
-            'Address' => $address,
+            'Address' => $host,
             'Port' => $port,
             'Meta' => [
                 'Protocol' => $protocol,
@@ -79,32 +78,33 @@ class ConsulService implements ServiceGovernanceInterface
         if ($protocol === 'jsonrpc-http') {
             $requestBody['Check'] = [
                 'DeregisterCriticalServiceAfter' => '90m',
-                'HTTP' => "http://{$address}:{$port}/",
+                'HTTP' => "http://{$host}:{$port}/",
                 'Interval' => '1s',
             ];
         }
         if (in_array($protocol, ['jsonrpc', 'jsonrpc-tcp-length-check'], true)) {
             $requestBody['Check'] = [
                 'DeregisterCriticalServiceAfter' => '90m',
-                'TCP' => "{$address}:{$port}",
+                'TCP' => "{$host}:{$port}",
                 'Interval' => '1s',
             ];
         }
         $response = $this->consulAgent->registerService($requestBody);
         if ($response->getStatusCode() === 200) {
-            $this->registeredServices[$serviceName][$protocol][$address][$port] = true;
-            $this->logger->info(sprintf('Service %s:%s register to the consul successfully.', $serviceName, $nextId), $this->defaultLoggerContext);
+            $this->registeredServices[$serviceName][$protocol][$host][$port] = $nextId;
+            $this->logger->info(sprintf('Service %s:%s register to the consul successfully.', $serviceName, $nextId));
         } else {
-            $this->logger->warning(sprintf('Service %s register to the consul failed.', $serviceName), $this->defaultLoggerContext);
+            $this->logger->warning(sprintf('Service %s register to the consul failed.', $serviceName));
         }
     }
 
-    public function deregister(string $serviceName, string $address, int $port, string $protocol)
+    public function deregister(string $serviceName, string $host, int $port, string $protocol)
     {
-        if ($serviceId = $this->isRegistered($serviceName, $address, $port, $protocol)) {
-            $this->registeredServices[$serviceName][$protocol][$address][$port] = false;
+        if ($this->isRegistered($serviceName, $host, $port, $protocol)) {
+            $serviceId = $this->registeredServices[$serviceName][$protocol][$host][$port];
+            $this->registeredServices[$serviceName][$protocol][$host][$port] = false;
             $this->consulAgent->deregisterService($serviceId);
-            $this->logger->info(sprintf('Service %s:%s deregister to the consul successfully.', $serviceName, $serviceId), $this->defaultLoggerContext);
+            $this->logger->info(sprintf('Service %s:%s deregister to the consul successfully.', $serviceName, $serviceId));
         }
     }
 
@@ -141,16 +141,16 @@ class ConsulService implements ServiceGovernanceInterface
         return $lastService['ID'] ?? $serviceName;
     }
 
-    protected function isRegistered(string $serviceName, string $address, int $port, string $protocol): bool
+    protected function isRegistered(string $serviceName, string $host, int $port, string $protocol): bool
     {
-        if (isset($this->registeredServices[$serviceName][$protocol][$address][$port])) {
+        if (isset($this->registeredServices[$serviceName][$protocol][$host][$port])) {
             return true;
         }
         $services = $this->getServices();
         $glue = ',';
-        $tag = implode($glue, [$serviceName, $address, $port, $protocol]);
-        foreach ($services as $serviceId => $service) {
-            if (!isset($service['Service'], $service['Address'], $service['Port'], $service['Meta']['Protocol'])) {
+        $tag = implode($glue, [$serviceName, $host, $port, $protocol]);
+        foreach ($services as $service) {
+            if (!isset($service['Service'], $service['Address'], $service['Port'], $service['Meta']['Protocol'], $service['ID'])) {
                 continue;
             }
             $currentTag = implode($glue, [
@@ -160,7 +160,7 @@ class ConsulService implements ServiceGovernanceInterface
                 $service['Meta']['Protocol'],
             ]);
             if ($currentTag === $tag) {
-                $this->registeredServices[$serviceName][$protocol][$address][$port] = $serviceId;
+                $this->registeredServices[$serviceName][$protocol][$host][$port] = $service['ID'];
                 return true;
             }
         }
@@ -171,7 +171,7 @@ class ConsulService implements ServiceGovernanceInterface
     {
         $response = $this->consulAgent->services();
         if ($response->getStatusCode() !== 200) {
-            $this->logger->warning(sprintf('Service %s register to the consul failed.', $name), $this->defaultLoggerContext);
+            $this->logger->warning(sprintf('Get services to the consul failed.'));
             return false;
         }
         return $response->json();

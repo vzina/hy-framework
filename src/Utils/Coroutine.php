@@ -68,4 +68,9 @@ class Coroutine extends UtilsCoroutine
             return $traceId;
         });
     }
+
+    public static function sleep($seconds)
+    {
+        return SwooleCoroutine::sleep($seconds);
+    }
 }

@@ -3,11 +3,13 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework;
 
+use Hyperf\Contract\StdoutLoggerInterface;
 use EyPhp\Framework\Component\Exception\ExceptionHandler;
-use EyPhp\Framework\Component\JsonRpc\Listeners\AutoAddConsumerDefinitionListener;
 use EyPhp\Framework\Component\Logger\StdoutLoggerFactory;
 use EyPhp\Framework\Middleware\ResponseFormatterMiddleware;
-use Hyperf\Contract\StdoutLoggerInterface;
+use EyPhp\Framework\Component\ServiceGovernance\Listener\RegisterServiceListener;
+use EyPhp\Framework\Component\JsonRpc\Listeners\AutoAddConsumerDefinitionListener;
+use EyPhp\Framework\Component\ServiceGovernance\Listener\DeregisterServiceListener;
 
 class ConfigProvider
 {
@@ -29,6 +31,10 @@ class ConfigProvider
                 $result = [];
                 if ((bool) env('CONSUMERS_AUTO_SERVICES_ENABLE', false)) {
                     $result[] = AutoAddConsumerDefinitionListener::class;
+                }
+                if ((bool) env('SERVICE_GOVERNANCE_ENABLE', false)) {
+                    $result[] = RegisterServiceListener::class;
+                    $result[] = DeregisterServiceListener::class;
                 }
                 return $result;
             })),

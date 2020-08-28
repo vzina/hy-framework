@@ -28,6 +28,7 @@
         "hyperf/rpc-server": "~2.0.0",
         "hyperf/pool": "~2.0.0",
         "hyperf/consul": "~2.0.0",
+        "hyperf/command": "~2.0.0",
         "hyperf/constants": "~2.0.0"
     },
     "require-dev": {

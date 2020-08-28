@@ -47,7 +47,7 @@ class ConsumerConfig
         $ret = [];
         $services = $this->loadCfg();
         foreach ($services as $service) {
-            if (env('REGISTRY_CENTER_ENABLE', false)) {
+            if (env('SERVICE_GOVERNANCE_ENABLE', false)) {
                 $consumers = $this->getConsulConsumer($service);
             } else {
                 $consumers = $this->getNodeConsumer($service);
@@ -62,17 +62,19 @@ class ConsumerConfig
 
     protected function getConsulConsumer(array $service)
     {
-        $envSet = (string) env('CONSUL_URI');
-        if (empty($envSet)) {
-            throw new Exception("未设置环境变量[CONSUL_URI]");
+        $registryProtocol = (string) env('SERVICE_GOVERNANCE_REGISTRY_PROTOCOL', 'consul');
+        $registryAddress = (string) env('SERVICE_GOVERNANCE_REGISTRY_ADDRESS');
+        if (empty($registryProtocol) || empty($registryAddress)) {
+            throw new Exception("未设置环境变量[SERVICE_GOVERNANCE_REGISTRY_PROTOCOL|SERVICE_GOVERNANCE_REGISTRY_ADDRESS]");
         }
         return [
             'name' => (string) $service['name'],
             'protocol' => (string) $service['protocol'],
             'load_balancer' => (string) $service['load_balancer'],
+            'auto_services' => (array) $service['auto_services'],
             'registry' => [
-                'protocol' => 'consul',
-                'address' => $envSet,
+                'protocol' => $registryProtocol,
+                'address' => $registryAddress,
             ],
             'options' => $this->getOptionsConfig((string) $service['prefix']),
         ];

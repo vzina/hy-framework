@@ -12,21 +12,30 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\ServiceGovernance\Listener;
 
+use Hyperf\Di\Annotation\Inject;
+use Hyperf\Framework\Event\OnShutdown;
 use Hyperf\Event\Contract\ListenerInterface;
+use EyPhp\Framework\Component\ServiceGovernance\ServiceManager;
 
 /**
  * description
  */
 class DeregisterServiceListener implements ListenerInterface
 {
+    /**
+     * @Inject
+     * @var ServiceManager
+     * @author weijian.ye
+     */
+    protected $serviceManager;
 
     public function listen(): array
     {
-        return [];
+        return [OnShutdown::class];
     }
 
     public function process(object $event)
     {
-        // code.
+        $this->serviceManager->deregister();
     }
 }
