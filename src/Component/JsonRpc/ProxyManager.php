@@ -8,13 +8,13 @@
  * @contact yeweijian299@163.com
  * @link    https://github.com/vzina
  */
-declare (strict_types=1);
+declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\JsonRpc;
 
-use Psr\Container\ContainerInterface;
 use EyPhp\Framework\Component\JsonRpc\ConsumerProxy\AbstractProxyService;
 use EyPhp\Framework\Utils\Parallel;
+use Psr\Container\ContainerInterface;
 
 /**
  * description
@@ -75,7 +75,7 @@ class ProxyManager
             $func = __FUNCTION__;
             $parallel = new Parallel(count($result));
             foreach ($result as $item) {
-                $parallel->add(function() use ($item, $func) {
+                $parallel->add(function () use ($item, $func) {
                     [$groupName, $protocol, $options] = $item['cfg'];
                     /** @var ServiceClient $proxyClient */
                     $proxyClient = make(ServiceClient::class, [
@@ -83,10 +83,10 @@ class ProxyManager
                         'groupName' => $groupName,
                         'serviceName' => $this->serviceName,
                         'protocol' => $protocol,
-                        'options' => $options
+                        'options' => $options,
                     ]);
                     $ret = [];
-                    $data = $proxyClient->__call($func, ['data' => $item['params']]);
+                    $data = (array) $proxyClient->__call($func, ['data' => $item['params']]);
                     // 设置结果为调用时的顺序
                     $keys = array_keys($item['params']);
                     foreach ($data as $d) {

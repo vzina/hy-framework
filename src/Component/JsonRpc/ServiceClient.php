@@ -12,7 +12,9 @@ declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\JsonRpc;
 
+use EyPhp\Framework\Utils\Coroutine;
 use RuntimeException;
+use Hyperf\Rpc\Context as RpcContext;
 use Hyperf\LoadBalancer\Node;
 use Hyperf\Contract\ConfigInterface;
 use Psr\Container\ContainerInterface;
@@ -36,6 +38,13 @@ class ServiceClient extends BaseServiceClient
     {
         $this->groupName = $groupName;
         parent::__construct($container, $serviceName, $protocol, $options);
+    }
+
+    protected function __request(string $method, array $params, ?string $id = null)
+    {
+        // 设置traceId
+        $this->container->get(RpcContext::class)->set('trace_id', Coroutine::traceId());
+        return parent::__request($method, $params, $id);
     }
 
 

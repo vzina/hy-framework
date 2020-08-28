@@ -8,16 +8,16 @@
  * @contact yeweijian299@163.com
  * @link    https://github.com/vzina
  */
-declare (strict_types=1);
+declare (strict_types = 1);
 
 namespace EyPhp\Framework\Component\ServiceGovernance\Service;
 
+use EyPhp\Framework\Component\Guzzle\ClientFactory;
+use EyPhp\Framework\Component\Logger\SysLog;
+use EyPhp\Framework\Component\ServiceGovernance\Contract\ServiceGovernanceInterface;
 use Hyperf\Consul\Agent;
 use Hyperf\Contract\ConfigInterface;
 use Psr\Container\ContainerInterface;
-use EyPhp\Framework\Component\Logger\SysLog;
-use EyPhp\Framework\Component\Guzzle\ClientFactory;
-use EyPhp\Framework\Component\ServiceGovernance\Contract\ServiceGovernanceInterface;
 
 /**
  * description
@@ -46,7 +46,7 @@ class ConsulService implements ServiceGovernanceInterface
 
     public function __construct(ContainerInterface $container, array $options = [])
     {
-        $this->logger = SysLog::get(SysLog::DEFAULT);
+        $this->logger = SysLog::get(SysLog::default);
         $this->options = $options;
         $this->consulAgent = new Agent(function () use ($container) {
             $config = $container->get(ConfigInterface::class);
@@ -65,7 +65,7 @@ class ConsulService implements ServiceGovernanceInterface
             return;
         }
 
-        $nextId = $this->generateId($this->getLastServiceId($serviceName));
+        $nextId = $this->generateId($serviceName, $host, $port, $protocol);
         $requestBody = [
             'Name' => $serviceName,
             'ID' => $nextId,
@@ -108,37 +108,9 @@ class ConsulService implements ServiceGovernanceInterface
         }
     }
 
-    protected function generateId(string $serviceName)
+    protected function generateId(string $serviceName, string $host, int $port, string $protocol)
     {
-        $exploded = explode('-', $serviceName);
-        $length = count($exploded);
-        $end = -1;
-        if ($length > 1 && is_numeric($exploded[$length - 1])) {
-            $end = $exploded[$length - 1];
-            unset($exploded[$length - 1]);
-        }
-        $end = intval($end);
-        ++$end;
-        $exploded[] = $end;
-        return implode('-', $exploded);
-    }
-
-    protected function getLastServiceId(string $serviceName)
-    {
-        $maxId = -1;
-        $lastService = $serviceName;
-        $services = $this->getServices();
-        foreach ($services ?? [] as $id => $service) {
-            if (isset($service['Service']) && $service['Service'] === $serviceName) {
-                $exploded = explode('-', (string)$id);
-                $length = count($exploded);
-                if ($length > 1 && is_numeric($exploded[$length - 1]) && $maxId < $exploded[$length - 1]) {
-                    $maxId = $exploded[$length - 1];
-                    $lastService = $service;
-                }
-            }
-        }
-        return $lastService['ID'] ?? $serviceName;
+        return md5("{$serviceName}-{$host}-{$port}-{$protocol}");
     }
 
     protected function isRegistered(string $serviceName, string $host, int $port, string $protocol): bool
@@ -146,7 +118,12 @@ class ConsulService implements ServiceGovernanceInterface
         if (isset($this->registeredServices[$serviceName][$protocol][$host][$port])) {
             return true;
         }
-        $services = $this->getServices();
+        $response = $this->consulAgent->services();
+        if ($response->getStatusCode() !== 200) {
+            $this->logger->warning(sprintf('Service %s register to the consul failed.', $serviceName));
+            return false;
+        }
+        $services = $response->json();
         $glue = ',';
         $tag = implode($glue, [$serviceName, $host, $port, $protocol]);
         foreach ($services as $service) {
@@ -165,15 +142,5 @@ class ConsulService implements ServiceGovernanceInterface
             }
         }
         return false;
-    }
-
-    protected function getServices()
-    {
-        $response = $this->consulAgent->services();
-        if ($response->getStatusCode() !== 200) {
-            $this->logger->warning(sprintf('Get services to the consul failed.'));
-            return false;
-        }
-        return $response->json();
     }
 }

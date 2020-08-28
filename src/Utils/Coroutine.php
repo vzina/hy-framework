@@ -14,6 +14,7 @@ namespace EyPhp\Framework\Utils;
 
 use Hyperf\Contract\StdoutLoggerInterface;
 use Hyperf\ExceptionHandler\Formatter\FormatterInterface;
+use Hyperf\Rpc\Context as RpcContext;
 use Hyperf\Utils\ApplicationContext;
 use Hyperf\Utils\Context;
 use Hyperf\Utils\Coroutine as UtilsCoroutine;
@@ -60,6 +61,13 @@ class Coroutine extends UtilsCoroutine
     {
         return Context::override(__CLASS__ . '.trace_id', function ($oldTraceId) use ($traceId) {
             if (empty($traceId)) {
+                // 基于服务调用时，获取调用链上的traceId
+                if (class_exists(RpcContext::class) &&
+                    $traceId = ApplicationContext::getContainer()->get(RpcContext::class)->get('trace_id')
+                ) {
+                    return $traceId;
+                }
+
                 return $oldTraceId ?: value(function () {
                     mt_srand(); // https://wiki.swoole.com/#/getting_started/notice?id=mt_rand%e9%9a%8f%e6%9c%ba%e6%95%b0
                     return md5(uniqid((string) mt_rand(), true));

@@ -4,6 +4,7 @@ declare (strict_types = 1);
 namespace EyPhp\Framework;
 
 use Hyperf\Contract\StdoutLoggerInterface;
+use EyPhp\Framework\Middleware\InitTraceIdMiddleware;
 use EyPhp\Framework\Component\Exception\ExceptionHandler;
 use EyPhp\Framework\Component\Logger\StdoutLoggerFactory;
 use EyPhp\Framework\Middleware\ResponseFormatterMiddleware;
@@ -40,13 +41,17 @@ class ConfigProvider
             })),
             'middlewares' => [
                 'http' => [
-                    ResponseFormatterMiddleware::class
+                    ResponseFormatterMiddleware::class,
+                    InitTraceIdMiddleware::class,
                 ],
                 'jsonrpc-http' => [
-                    ResponseFormatterMiddleware::class
+                    ResponseFormatterMiddleware::class,
+                    InitTraceIdMiddleware::class,
+
                 ],
                 'jsonrpc-tcp-length-check' => [
-                    ResponseFormatterMiddleware::class
+                    ResponseFormatterMiddleware::class,
+                    InitTraceIdMiddleware::class,
                 ],
             ],
             'exceptions' => [

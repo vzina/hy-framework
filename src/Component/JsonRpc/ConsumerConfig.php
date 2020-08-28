@@ -24,7 +24,7 @@ class ConsumerConfig
 {
     const SERVER_PROTOCOL = 'jsonrpc-http';
     const SERVER_LOAD_BALANCER = 'random';
-    const CONTRACT_DIR_NAME = 'Contract';
+    const CONTRACT_DIR_NAME = 'Contract'; // 接口目录名
 
     /**
      * @var Filesystem
@@ -67,17 +67,14 @@ class ConsumerConfig
         if (empty($registryProtocol) || empty($registryAddress)) {
             throw new Exception("未设置环境变量[SERVICE_GOVERNANCE_REGISTRY_PROTOCOL|SERVICE_GOVERNANCE_REGISTRY_ADDRESS]");
         }
-        return [
-            'name' => (string) $service['name'],
-            'protocol' => (string) $service['protocol'],
-            'load_balancer' => (string) $service['load_balancer'],
-            'auto_services' => (array) $service['auto_services'],
+
+        return array_merge($service, [
             'registry' => [
                 'protocol' => $registryProtocol,
                 'address' => $registryAddress,
             ],
             'options' => $this->getOptionsConfig((string) $service['prefix']),
-        ];
+        ]);
     }
 
     protected function getNodeConsumer(array $service): array
@@ -86,9 +83,8 @@ class ConsumerConfig
         $prefix = (string) $service['prefix'];
         $envName = $prefix . '_NODES';
         $envSet = (string) env($envName);
-        // 不处理空配置
         if (empty($envSet)) {
-            return [];
+            throw new Exception(sprintf("未设置环境变量[%s]", $envName));
         }
         $nodeList = explode('|', $envSet);
         foreach ($nodeList as $node) {
@@ -99,12 +95,10 @@ class ConsumerConfig
             $nodes[] = ['host' => $nodeArr[0], 'port' => (int) $nodeArr[1]];
         }
 
-        $result = [
+        return array_merge($service, [
             'nodes' => $nodes,
             'options' => $this->getOptionsConfig($prefix),
-        ];
-
-        return array_merge($service, $result);
+        ]);
     }
 
     protected function getOptionsConfig(string $prefix)
@@ -126,8 +120,7 @@ class ConsumerConfig
 
     protected function loadCfg(): array
     {
-        $services = Composer::getMergedExtra('eyphp')['config'] ?? [];
-        return $this->loadServices($services);
+        return $this->loadServices(Composer::getMergedExtra('eyphp')['config'] ?? []);
     }
 
     protected function loadServices(array $services): array
@@ -160,7 +153,6 @@ class ConsumerConfig
                     foreach ($files as $file) {
                         /** @var SplFileInfo $file */
                         $groupCfg['auto_services'][] = $nsRoot . strtr(strstr($file->getPathname(), '.', true), [$basePath => '', '/' => '\\']);
-
                     }
                     $serviceConfigs[] = $groupCfg;
                 }
